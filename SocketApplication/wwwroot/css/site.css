@@ -164,3 +164,9 @@ body::-webkit-scrollbar {
     ::-webkit-scrollbar-thumb:window-inactive {
         background: #ddd;
     }
+
+#wrap {
+    margin: auto;
+    padding: 10px;
+    transform: translate(25%);
+}
