@@ -1,0 +1,76 @@
+﻿@{
+    ViewData["Title"] = "Contact";
+}
+<h2>@ViewData["Title"].</h2>
+<h3>@ViewData["Message"]</h3>
+
+<link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+
+<div class="container">
+    <div class="row">
+
+        <div class="message-wrap col-lg-8">
+            <div id="chat" class="msg-wrap">
+                <div class="alert alert-info msg-date">
+                    <strong>Today</strong>
+                </div>
+            </div>
+
+            <div class="send-wrap ">
+                <input class="form-control send-message" id="textField" placeholder="Write a reply..." />
+                <br />
+                <button type="button" class="btn" id="BtnStart">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var btnStart = $("#BtnStart");
+
+
+    var protocol = location.protocol === "https:" ? "wss:" : "ws:";
+    var wsUri = protocol + "//" + window.location.host + "/ws";
+    var socket = new WebSocket(wsUri);
+
+    socket.onopen = e => {
+        console.log("socket opened", e);
+    };
+
+    socket.onmessage = function (e) {
+        console.log("socket message recieved", e);
+        $("#chat").append(cmsg(e.origin, e.data));
+    };
+
+    function cmsg(s, d) {
+        var wrap = $("<div>", { class: "media msg" });
+        var div = $("<div>", { class: "media-body" });
+        var time = $("<small>", { class: "pull-right time" }).text(new Date().toDateString()).append($("<i>", { class: "fa fa-clock-o" }));
+        var user = $("<h5>", { class: "media-heading" }).text(s);
+        var message = $("<div>", { class: "col-lg-10" }).text(s + ": " + d);
+        wrap.append(div.append(time).append(user).append(message));
+        return wrap;
+    }
+
+    btnStart.addEventListener("click", function (e) {
+        e.preventDefault();
+        var input = $('#textField').value;
+        var message = (input != "") ? input : "Empty string...";
+
+        // Create message to be appended into chat
+        $("#chat").append(cmsg("User", message));
+
+        // Send message to server through socket
+        socket.send(message);
+        $('#textField').val('');
+
+        //    socket.onclose = function (e) {
+        //        console.log("socket closed", e);
+        //    };
+
+        //    socket.onerror = function (e) {
+        //        console.error(e.data);
+        //    };
+    });
+
+</script>
