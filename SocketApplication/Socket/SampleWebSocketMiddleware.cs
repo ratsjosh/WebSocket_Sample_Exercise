@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 
 namespace SocketApplication.Socket
 {
+    // Resource: https://www.softfluent.com/blog/dev/2016/12/11/Using-Web-Sockets-with-ASP-NET-Core
+
     public class SampleWebSocketMiddleware
     {
         // RequestDelegate is used to build the request pipeline. RequestDelegate handles each HTTP request.
