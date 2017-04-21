@@ -11,6 +11,7 @@ using SocketApplication.Socket;
 
 namespace SocketApplication
 {
+    // Middleware Resource: https://docs.microsoft.com/en-us/aspnet/core/fundamentals/middleware
     public class Startup
     {
         public Startup(IHostingEnvironment env)
