@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using SocketApplicationExercise.Socket;
 
 namespace SocketApplicationExercise
 {
@@ -36,6 +37,11 @@ namespace SocketApplicationExercise
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
+            
+            // Accept web socket requests
+            app.UseWebSockets();
+            // handle web socket requests
+            app.Map("/ws", (_app) => _app.UseMiddleware<SampleWebSocketMiddleware>());
 
             if (env.IsDevelopment())
             {
