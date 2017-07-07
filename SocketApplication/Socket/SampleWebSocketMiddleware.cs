@@ -1,10 +1,13 @@
 ﻿using Microsoft.AspNetCore.Http;
+using SocketApplication.Data;
+using SocketApplication.Extensions;
 using System;
 using System.IO;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using static SocketApplication.Utils.Conversions.BusArrival;
 
 namespace SocketApplication.Socket
 {
@@ -41,7 +44,7 @@ namespace SocketApplication.Socket
             using (var socket = await context.WebSockets.AcceptWebSocketAsync())
             {
                 await SendStringAsync(socket, "Welcome to the Socket Application!", ct);
-                
+
                 while (socket.State == WebSocketState.Open)
                 {
                     // Socket state is still open
@@ -51,11 +54,34 @@ namespace SocketApplication.Socket
                         await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Expected a reply", ct);
                         return;
                     }
-                    await SendStringAsync(socket, $"receive message => \"{response}\"", ct);
-
+                    string[] extracts = response.ExtractFeatures();
+                    BusInfo busInfo = new BusInfo();
+                    Information bi = busInfo.GetBusRequest(extracts);
+                    if (bi == null)
+                        await SendStringAsync(socket, $"receive message => \"{response}\"", ct);
+                    else
+                    {
+                        ServiceInformation result = await busInfo.GetBusInformationAsync(bi.StopNumber, bi.BusNumber);
+                        Operation op;
+                        if (Enum.TryParse(result.Services[0].Status.Replace(" ", String.Empty), out op))
+                        {
+                            string message = "";
+                            switch (op)
+                            {
+                                case Operation.InOperation:
+                                    message = $"Bus {result.Services[0].ServiceNo} Next bus: {result.Services[0].NextBus.EstimatedArrival}    -----    Subsequent bus: {result.Services[0].SubsequentBus.EstimatedArrival}    -----    Thereafter: {result.Services[0].SubsequentBus3.EstimatedArrival}";
+                                    break;
+                                case Operation.NotInOperation:
+                                    message = $"Bus {result.Services[0].ServiceNo} is not operating at {DateTime.Now.ToString("h:mm:ss tt") }";
+                                    break;
+                            }
+                            await SendStringAsync(socket, message, ct);
+                        }
+                    }
                     //await Task.Delay(1000, ct);
                 }
             }
+
         }
 
         /// <summary>
@@ -91,7 +117,7 @@ namespace SocketApplication.Socket
                 do
                 {
                     ct.ThrowIfCancellationRequested();
-                    
+
                     // Await for message from client
                     result = await socket.ReceiveAsync(buffer, ct);
                     ms.Write(buffer.Array, buffer.Offset, result.Count);
